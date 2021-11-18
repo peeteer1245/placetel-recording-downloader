@@ -1,3 +1,4 @@
+import requests
 import configparser
 
 
@@ -5,6 +6,11 @@ class Config:
     AUTH_TOKEN = ""
     DOWNLOAD_FOLDER = ""
     DELETE_AFTER_DOWNLOAD = False
+
+    # API endpoints
+    GET_ALL_RECORDINGS_ENDPOINT = "https://api.placetel.de/v2/recordings"
+    GET_A_RECORDING_ENDPOINT = "https://api.placetel.de/v2/recordings/{}"
+    DELETE_A_RECORDING_ENDPOINT = "https://api.placetel.de/v2/recordings/{}"
 
     # Boilerplate examples
     # TODO: remove boilerplate code
@@ -33,6 +39,21 @@ class Config:
             ]:
                 Config.DELETE_AFTER_DOWNLOAD = True
 
+        if "GET_ALL_RECORDINGS_ENDPOINT" in config["DEFAULT"]:
+            Config.GET_ALL_RECORDINGS_ENDPOINT = config["DEFAULT"][
+                "GET_ALL_RECORDINGS_ENDPOINT"
+            ]
+
+        if "GET_A_RECORDING_ENDPOINT" in config["DEFAULT"]:
+            Config.GET_A_RECORDING_ENDPOINT = config["DEFAULT"][
+                "GET_A_RECORDING_ENDPOINT"
+            ]
+
+        if "DELETE_A_RECORDING_ENDPOINT" in config["DEFAULT"]:
+            Config.DELETE_A_RECORDING_ENDPOINT = config["DEFAULT"][
+                "DELETE_A_RECORDING_ENDPOINT"
+            ]
+
         # Boilerplate examples
         # TODO: remove boilerplate code
         if "BOOLEAN" in config["DEFAULT"]:
@@ -46,19 +67,38 @@ class Config:
             Config.INTEGER = int(config["DEFAULT"]["INTEGER"])
 
 
-def authorized_get(url):
-    headers = {
-        "Authorization": Config.AUTH_TOKEN
-    }
+def authorized_http_get(url: str) -> requests.Response:
+    """makes a authorized http get and returns response object
 
-    # url = "https://api.placetel.de/v2/recordings"
-    # url = "https://api.placetel.de/v2/recordings/42069"
-    # url = "https://storage.googleapis.com/placetel-documents/uploads/recording/file/42069/..."
+    Args:
+        url (str): url to HTTP GET
+
+    Returns:
+        requests.Response: Response Object
+    """
+    headers = {"Authorization": Config.AUTH_TOKEN}
 
     r = requests.get(url, headers=headers)
 
     return r
 
 
+def authorized_http_delete(url: str) -> requests.Response:
+    """makes a authorized http delete and returns response object
+
+    Args:
+        url (str): url to HTTP DELETE
+
+    Returns:
+        requests.Response: Response Object
+    """
+    headers = {"Authorization": Config.AUTH_TOKEN}
+
+    r = requests.delete(url, headers=headers)
+
+    return r
+
+
 if __name__ == "__main__":
-    pass
+    # read the config file
+    Config()
