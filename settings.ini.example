@@ -1,0 +1,16 @@
+[DEFAULT]
+# you can generate your token here https://web.placetel.de/integrations/web_api
+AUTH_TOKEN=enter the token here
+
+# where do you want the downloaded recordings to go?
+DOWNLOAD_FOLDER=./downloads
+
+# Do you want to delete the recordings from Placetel servers after Downloading?
+DELETE_AFTER_DOWNLOAD=False
+
+
+# Boilerplate examples
+# TODO: remove boilerplate code
+BOOLEAN=true
+STRING=text with spaces
+INTEGER=42
