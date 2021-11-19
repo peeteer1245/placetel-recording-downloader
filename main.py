@@ -12,7 +12,7 @@ class Config:
     DO_WRITE_DELETED_LIST = False
 
     # API endpoints
-    GET_ALL_RECORDINGS_ENDPOINT = "https://api.placetel.de/v2/recordings"
+    GET_ALL_RECORDINGS_ENDPOINT = "https://api.placetel.de/v2/recordings?page={}"
     GET_A_RECORDING_ENDPOINT = "https://api.placetel.de/v2/recordings/{}"
     DELETE_A_RECORDING_ENDPOINT = "https://api.placetel.de/v2/recordings/{}"
 
@@ -119,15 +119,39 @@ def authorized_http_delete(url: str) -> requests.Response:
     return r
 
 
-def get_all_recording_info() -> list:
-    return []
+class Recordings(object):
+    """Recordings is a Generator to retrieve pages of recordings from the API
+    it returns one page from the API at a time
+    one page is a list of at least one recording and up to 25 recordings
+
+    this Generator implements caching and does not refresh the cache on a 2nd run
+    if you get 20 pages on the first execution you will get the same 20 pages on the 2nd
+
+    Args:
+        object ([type]): [description]
+
+    Returns:
+        list: list of 1 to 25 recordings API objects
+    """
+
+    max_pages = 0
+    recordings_pages = []
+
+    def __init__(self) -> None:
+        self.page = 1
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        raise StopIteration()
 
 
-def download_all_recordings(recordings: list) -> None:
+def download_all_recordings() -> None:
     pass
 
 
-def delete_all_recordings(recordings: list) -> None:
+def delete_all_recordings() -> None:
     pass
 
 
@@ -135,19 +159,8 @@ if __name__ == "__main__":
     # read the config file
     Config()
 
-    list_of_recordings = get_all_recording_info()
-
-    # filter the list of recordings
-    # this way unwanted recordings never get downloaded or deleted
-    filtered_list = []
-    for element in list_of_recordings:
-        if element["id"] not in Config.EXCLUDE_RECORDING_IDS:
-            filtered_list.append(element)
-    list_of_recordings = filtered_list
-    del filtered_list
-
     if Config.DO_DOWNLOAD:
-        download_all_recordings(list_of_recordings)
+        download_all_recordings()
 
     if Config.DO_DELETE:
-        delete_all_recordings(list_of_recordings)
+        delete_all_recordings()
