@@ -127,9 +127,6 @@ class Recordings(object):
     this Generator implements caching and does not refresh the cache on a 2nd run
     if you get 20 pages on the first execution you will get the same 20 pages on the 2nd
 
-    Args:
-        object ([type]): [description]
-
     Returns:
         list: list of 1 to 25 recordings API objects
     """
