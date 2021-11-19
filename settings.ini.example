@@ -5,12 +5,19 @@ AUTH_TOKEN=enter the token here
 # where do you want the downloaded recordings to go?
 DOWNLOAD_FOLDER=./downloads
 
-# Do you want to delete the recordings from Placetel servers after Downloading?
-DELETE_AFTER_DOWNLOAD=False
+# Do you want to download all recordings from Placetel?
+DO_DOWNLOAD=True
 
+# Do you want to delete all recordings from Placetel?
+DO_DELETE=False
 
-# Boilerplate examples
-# TODO: remove boilerplate code
-BOOLEAN=true
-STRING=text with spaces
-INTEGER=42
+# comma seperated list of recording ids to not process (download and delete)
+EXCLUDE_RECORDING_IDS=1,2,3,4
+
+# Write a list of all downloaded recordings (only the id)
+# the destination file will be "./downloaded.txt"
+DO_WRITE_DOWNLOADED_LIST=True
+
+# Write a list of all deleted recordings (only the id)
+# the destination file will be "./deleted.txt"
+DO_WRITE_DELETED_LIST=True
