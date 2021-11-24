@@ -13,7 +13,9 @@ class Config:
     DO_WRITE_DELETED_LIST = False
 
     # API endpoints
-    GET_ALL_RECORDINGS_ENDPOINT = "https://api.placetel.de/v2/recordings?page={}&order=asc"
+    GET_ALL_RECORDINGS_ENDPOINT = (
+        "https://api.placetel.de/v2/recordings?page={}&order=asc"
+    )
     GET_A_RECORDING_ENDPOINT = "https://api.placetel.de/v2/recordings/{}"
     DELETE_A_RECORDING_ENDPOINT = "https://api.placetel.de/v2/recordings/{}"
 
@@ -106,7 +108,7 @@ class Recordings(object):
     TODO: -> today = datetime.now().astimezone().replace(hour=0, minute=0, second=0, microsecond=0)
     """
 
-    max_pages = 0
+    is_fully_cached = False
     recordings_pages = []
 
     # log all requests for error dumping
@@ -114,16 +116,69 @@ class Recordings(object):
     _dump_format = "{};{};{};{}"
 
     def __init__(self) -> None:
-        self.current_page = 1
+        self.current_page = 0
+        self.today = (
+            datetime.now()
+            .astimezone()
+            .replace(hour=0, minute=0, second=0, microsecond=0)
+        )
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        raise StopIteration()
+        self.current_page += 1
+
+        if Recordings.is_fully_cached:
+            # we have already downloaded everything there is in a previous run
+
+            # exit if we have reached the end of the cached recording pages
+            if self.current_page > len(Recordings.recordings_pages):
+                raise StopIteration()
+
+            return Recordings.recordings_pages[self.current_page - 1]
+        else:
+            # we are downloading pages for the first time
+            all_recordings_endpoint = Config.GET_ALL_RECORDINGS_ENDPOINT.format(
+                self.current_page
+            )
+            recordings_page = self._authorized_http_get(all_recordings_endpoint)
+
+            # dump if a request goes wrong
+            if recordings_page.status_code != 200:
+                dump_str = Recordings._dump_format.format(
+                    datetime.now().isoformat(),
+                    recordings_page.url,
+                    recordings_page.status_code,
+                    "failed request",
+                )
+                Recordings._record_of_all_requests.append(dump_str)
+
+                self._dump()
+                raise StopIteration()
+
+            # filter recordings to only allow recordings from before today
+            filtered_recordings = []
+            for recording in recordings_page.json():
+                if datetime.fromisoformat(recording["time"]) < self.today:
+                    filtered_recordings.append(recording)
+                else:
+                    # because the endpoint is sorted by date asc
+                    # we can assume all further recordings are from today
+                    break
+
+            if len(filtered_recordings) > 0:
+                Recordings.recordings_pages.append(filtered_recordings)
+                return filtered_recordings
+            else:
+                Recordings.is_fully_cached = True
+                raise StopIteration()
 
     def _dump(self):
-        pass
+        # TODO: maybe dump _record_of_all_requests to .csv?
+        # TODO: maybe dump recordings_pages to .json?
+        for row in Recordings._record_of_all_requests:
+            print(row)
 
     def _authorized_http_get(self, url: str) -> requests.Response:
         """makes a authorized http get and returns response object
@@ -137,6 +192,11 @@ class Recordings(object):
         headers = {"Authorization": Config.AUTH_TOKEN}
 
         r = requests.get(url, headers=headers)
+
+        dump_str = Recordings._dump_format.format(
+            datetime.now().isoformat(), r.url, r.status_code, "HTTP GET"
+        )
+        Recordings._record_of_all_requests.append(dump_str)
 
         return r
 
@@ -152,6 +212,11 @@ class Recordings(object):
         headers = {"Authorization": Config.AUTH_TOKEN}
 
         r = requests.delete(url, headers=headers)
+
+        dump_str = Recordings._dump_format.format(
+            datetime.now().isoformat(), r.url, r.status_code, "HTTP DELETE"
+        )
+        Recordings._record_of_all_requests.append(dump_str)
 
         return r
 
