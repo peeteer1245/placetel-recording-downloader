@@ -1,5 +1,6 @@
 import requests
 import configparser
+from datetime import datetime
 
 
 class Config:
@@ -12,7 +13,7 @@ class Config:
     DO_WRITE_DELETED_LIST = False
 
     # API endpoints
-    GET_ALL_RECORDINGS_ENDPOINT = "https://api.placetel.de/v2/recordings?page={}"
+    GET_ALL_RECORDINGS_ENDPOINT = "https://api.placetel.de/v2/recordings?page={}&order=asc"
     GET_A_RECORDING_ENDPOINT = "https://api.placetel.de/v2/recordings/{}"
     DELETE_A_RECORDING_ENDPOINT = "https://api.placetel.de/v2/recordings/{}"
 
@@ -87,61 +88,72 @@ class Config:
             ]
 
 
-def authorized_http_get(url: str) -> requests.Response:
-    """makes a authorized http get and returns response object
-
-    Args:
-        url (str): url to HTTP GET
-
-    Returns:
-        requests.Response: Response Object
-    """
-    headers = {"Authorization": Config.AUTH_TOKEN}
-
-    r = requests.get(url, headers=headers)
-
-    return r
-
-
-def authorized_http_delete(url: str) -> requests.Response:
-    """makes a authorized http delete and returns response object
-
-    Args:
-        url (str): url to HTTP DELETE
-
-    Returns:
-        requests.Response: Response Object
-    """
-    headers = {"Authorization": Config.AUTH_TOKEN}
-
-    r = requests.delete(url, headers=headers)
-
-    return r
-
-
 class Recordings(object):
     """Recordings is a Generator to retrieve pages of recordings from the API
+    it will never return a recording of the current day
     it returns one page from the API at a time
     one page is a list of at least one recording and up to 25 recordings
 
-    this Generator implements caching and does not refresh the cache on a 2nd run
+    this Generator implements caching and does not refresh the cache on consecutive runs
     if you get 20 pages on the first execution you will get the same 20 pages on the 2nd
 
     Returns:
         list: list of 1 to 25 recordings API objects
+
+    TODO: set the start and end filter in the API Request
+    TODO: -> set the order to asc and stop when you get the first recording from today
+    TODO: -> datetime.fromisoformat(date_string)
+    TODO: -> today = datetime.now().astimezone().replace(hour=0, minute=0, second=0, microsecond=0)
     """
 
     max_pages = 0
     recordings_pages = []
 
+    # log all requests for error dumping
+    _record_of_all_requests = ["timestamp;API_endpoint;HTTP_status_code;misc"]
+    _dump_format = "{};{};{};{}"
+
     def __init__(self) -> None:
-        self.page = 1
+        self.current_page = 1
 
     def __iter__(self):
         return self
 
     def __next__(self):
         raise StopIteration()
+
+    def _dump(self):
+        pass
+
+    def _authorized_http_get(self, url: str) -> requests.Response:
+        """makes a authorized http get and returns response object
+
+        Args:
+            url (str): url to HTTP GET
+
+        Returns:
+            requests.Response: Response Object
+        """
+        headers = {"Authorization": Config.AUTH_TOKEN}
+
+        r = requests.get(url, headers=headers)
+
+        return r
+
+    def _authorized_http_delete(self, url: str) -> requests.Response:
+        """makes a authorized http delete and returns response object
+
+        Args:
+            url (str): url to HTTP DELETE
+
+        Returns:
+            requests.Response: Response Object
+        """
+        headers = {"Authorization": Config.AUTH_TOKEN}
+
+        r = requests.delete(url, headers=headers)
+
+        return r
 
 
 def download_all_recordings() -> None:
