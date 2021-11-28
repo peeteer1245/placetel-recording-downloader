@@ -227,6 +227,34 @@ class Recordings(object):
 
         return r
 
+    @staticmethod
+    def delete_by_id(id: int) -> None:
+        """delete a recording drom Placetel servers by id
+
+        Args:
+            id (int): id of the recording to be deleted
+        """
+
+        url = Config.DELETE_A_RECORDING_ENDPOINT.format(id)
+
+        r = Recordings._authorized_http_delete(url)
+
+        # dump if a request goes wrong
+        if r.status_code != 200 or r.status_code != 204:
+            dump_str = Recordings._dump_format.format(
+                datetime.now().isoformat(),
+                r.url,
+                r.status_code,
+                "failed request",
+            )
+            Recordings._record_of_all_requests.append(dump_str)
+
+            Recordings._dump()
+            r.raise_for_status()
+
+        return
+
+
 def save_to_file(content: bytes, filename: str) -> None:
     with open(filename, "wb") as f:
         f.write(content)
@@ -282,7 +310,15 @@ def download_all_recordings() -> None:
 
 
 def delete_all_recordings() -> None:
-    pass
+    current_recording = 0
+
+    for recording_collection in Recordings():
+        for recording in recording_collection:
+            current_recording += 1
+
+            print("{} | deleting".format(current_recording))
+
+            Recordings.delete_by_id(recording["id"])
 
 
 def main():
