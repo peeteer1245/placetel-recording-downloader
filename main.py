@@ -1,3 +1,5 @@
+import os
+import pathlib
 import requests
 import configparser
 from datetime import datetime
@@ -142,7 +144,7 @@ class Recordings(object):
             all_recordings_endpoint = Config.GET_ALL_RECORDINGS_ENDPOINT.format(
                 self.current_page
             )
-            recordings_page = self._authorized_http_get(all_recordings_endpoint)
+            recordings_page = Recordings._authorized_http_get(all_recordings_endpoint)
 
             # dump if a request goes wrong
             if recordings_page.status_code != 200:
@@ -154,8 +156,8 @@ class Recordings(object):
                 )
                 Recordings._record_of_all_requests.append(dump_str)
 
-                self._dump()
-                raise StopIteration()
+                Recordings._dump()
+                recordings_page.raise_for_status()
 
             # filter recordings to only allow recordings from before today
             filtered_recordings = []
@@ -174,13 +176,15 @@ class Recordings(object):
                 Recordings.is_fully_cached = True
                 raise StopIteration()
 
-    def _dump(self):
+    @staticmethod
+    def _dump():
         # TODO: maybe dump _record_of_all_requests to .csv?
         # TODO: maybe dump recordings_pages to .json?
         for row in Recordings._record_of_all_requests:
             print(row)
 
-    def _authorized_http_get(self, url: str) -> requests.Response:
+    @staticmethod
+    def _authorized_http_get(url: str) -> requests.Response:
         """makes a authorized http get and returns response object
 
         Args:
@@ -189,6 +193,7 @@ class Recordings(object):
         Returns:
             requests.Response: Response Object
         """
+
         headers = {"Authorization": Config.AUTH_TOKEN}
 
         r = requests.get(url, headers=headers)
@@ -200,7 +205,8 @@ class Recordings(object):
 
         return r
 
-    def _authorized_http_delete(self, url: str) -> requests.Response:
+    @staticmethod
+    def _authorized_http_delete(url: str) -> requests.Response:
         """makes a authorized http delete and returns response object
 
         Args:
@@ -209,6 +215,7 @@ class Recordings(object):
         Returns:
             requests.Response: Response Object
         """
+
         headers = {"Authorization": Config.AUTH_TOKEN}
 
         r = requests.delete(url, headers=headers)
@@ -220,9 +227,58 @@ class Recordings(object):
 
         return r
 
+def save_to_file(content: bytes, filename: str) -> None:
+    with open(filename, "wb") as f:
+        f.write(content)
+    return
+
 
 def download_all_recordings() -> None:
-    pass
+    if not os.path.exists(Config.DOWNLOAD_FOLDER):
+        print(
+            "{} does not exist. Please create the directory.".format(
+                Config.DOWNLOAD_FOLDER
+            )
+        )
+        quit()
+
+    current_recording = 0
+
+    for recording_collection in Recordings():
+        for recording in recording_collection:
+            current_recording += 1
+
+            print("{} | downloading".format(current_recording))
+
+            r = Recordings._authorized_http_get(recording["file"])
+
+            # dump if a request goes wrong
+            if r.status_code != 200:
+                dump_str = Recordings._dump_format.format(
+                    datetime.now().isoformat(),
+                    r.url,
+                    r.status_code,
+                    "failed request",
+                )
+                Recordings._record_of_all_requests.append(dump_str)
+
+                Recordings._dump()
+                r.raise_for_status()
+
+            folder = pathlib.PurePath(Config.DOWNLOAD_FOLDER)
+
+            filename = pathlib.PurePath(
+                "{}_{}_{}_{}.mp3".format(
+                    recording["time"],
+                    recording["direction"],
+                    recording["from"],
+                    recording["to"],
+                )
+            )
+
+            print("{} | saving".format(current_recording))
+
+            save_to_file(r.content, str(folder / filename))
 
 
 def delete_all_recordings() -> None:
