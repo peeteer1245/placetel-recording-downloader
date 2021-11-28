@@ -1,5 +1,5 @@
 # placetel-recording-downloader
-Download Call recordings from Placetel via the web API
+Download and delete Call recordings from Placetel via the web API
 
 # Setup
 
@@ -31,4 +31,4 @@ This project does not:
 # TODO
 
 - write list of downloaded and deleted files
-- add option to order files into iso8601 folders (./YYYY/MM/DD/\*.mp3)
+- add option to order files into iso8601 ordered folders (./YYYY/MM/DD/\*.mp3)
