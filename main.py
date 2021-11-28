@@ -292,6 +292,9 @@ def main():
     if Config.DO_DOWNLOAD:
         download_all_recordings()
 
+    if Config.DO_DOWNLOAD and Config.DO_DELETE:
+        input("Please verify all files (press enter to continue)")
+
     if Config.DO_DELETE:
         delete_all_recordings()
 
