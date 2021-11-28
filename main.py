@@ -229,7 +229,7 @@ def delete_all_recordings() -> None:
     pass
 
 
-if __name__ == "__main__":
+def main():
     # read the config file
     Config()
 
@@ -238,3 +238,7 @@ if __name__ == "__main__":
 
     if Config.DO_DELETE:
         delete_all_recordings()
+
+
+if __name__ == "__main__":
+    main()
