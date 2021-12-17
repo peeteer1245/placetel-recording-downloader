@@ -240,7 +240,7 @@ class Recordings(object):
         r = Recordings._authorized_http_delete(url)
 
         # dump if a request goes wrong
-        if r.status_code != 200 or r.status_code != 204:
+        if r.status_code != 200 and r.status_code != 204:
             dump_str = Recordings._dump_format.format(
                 datetime.now().isoformat(),
                 r.url,
