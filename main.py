@@ -310,6 +310,11 @@ def download_all_recordings() -> None:
 
 
 def delete_all_recordings() -> None:
+    # Temporary FIX #6
+    for recording_collection in Recordings():
+        for recoding in recording_collection:
+            pass
+
     current_recording = 0
 
     for recording_collection in Recordings():
