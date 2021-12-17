@@ -297,7 +297,7 @@ def download_all_recordings() -> None:
 
             filename = pathlib.PurePath(
                 "{}_{}_{}_{}.mp3".format(
-                    recording["time"],
+                    recording["time"].replace(":", "-"),
                     recording["direction"],
                     recording["from"],
                     recording["to"],
